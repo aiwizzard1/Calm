@@ -156,6 +156,8 @@ textarea:focus, input[type=text]:focus { border-color: var(--accent); }
 <script>
 'use strict';
 
+const VERSION = '1.2';
+
 /* ---------- content ---------- */
 
 const PROMPTS = [
@@ -738,6 +740,7 @@ function about() {
         <p class="muted small">This is a self-care tool, not therapy. If old memories or trauma come up and feel heavy, it’s a good sign to work with a therapist. If you are in crisis or feel unsafe, call your local emergency number. In the US you can call or text <strong>988</strong>.</p>
       </div>
       <button class="btn danger" id="wipe">Delete all my data</button>
+      <p class="muted small" style="text-align:center">Version ${VERSION}</p>
     </div>
   `);
   on('back', home);
@@ -774,7 +777,15 @@ function about() {
 home();
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
+  // When a new version takes over, reload once so it shows right away.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
 }
 </script>
 </body>

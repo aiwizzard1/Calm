@@ -1,6 +1,6 @@
 // Caches the app so it opens offline. Your journal is never touched here:
 // it lives in this phone's local storage and is never sent anywhere.
-const CACHE = 'calm-v2';
+const CACHE = 'calm-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -14,10 +14,11 @@ self.addEventListener('activate', e => {
 });
 
 // Network first so updates show up, falling back to the cache when offline.
+// 'no-cache' makes the phone check GitHub for a newer copy every time.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-cache' })
       .then(res => {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy));
