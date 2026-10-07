@@ -4,7 +4,7 @@ A small, private app for calming down and working through triggers. Save it to y
 
 - **I need to calm down**: one minute of guided breathing, then 5-4-3-2-1 grounding.
 - **Work through a trigger**: pick the fear underneath, then go through short questions about the thought, your body and your younger self. Quick (about 5 min) or full (about 20 min).
-- **Journal**: your past reflections, with backup and restore.
+- **Journal**: write freely (or dictate with the keyboard microphone), tag a mood, and look back at past reflections. Includes backup and restore.
 
 ## Privacy
 

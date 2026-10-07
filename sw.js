@@ -1,6 +1,6 @@
 // Caches the app so it opens offline. Your journal is never touched here:
 // it lives in this phone's local storage and is never sent anywhere.
-const CACHE = 'calm-v1';
+const CACHE = 'calm-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {

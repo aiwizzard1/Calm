@@ -241,7 +241,7 @@ function load() {
     const data = raw ? JSON.parse(raw) : null;
     if (data && Array.isArray(data.entries)) return data;
   } catch (e) {}
-  return { entries: [], draft: null };
+  return { entries: [], draft: null, noteDraft: null };
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
@@ -316,8 +316,8 @@ function home() {
       <button class="card tap" id="journal">
         <h3>Journal</h3>
         <p class="muted small" style="margin-top:4px">${db.entries.length
-          ? `${db.entries.length} reflection${db.entries.length === 1 ? '' : 's'} saved on this phone`
-          : 'Your past reflections will show up here'}</p>
+          ? `Write freely · ${db.entries.length} entr${db.entries.length === 1 ? 'y' : 'ies'} saved on this phone`
+          : 'Write freely, or look back at past reflections'}</p>
       </button>
     </div>
 
@@ -569,44 +569,112 @@ function finish() {
   on('view', () => viewEntry(entry.id));
 }
 
+const MOODS = ['Calm', 'Anxious', 'Sad', 'Angry', 'Hurt', 'Lonely', 'Hopeful', 'Grateful'];
+const isNote = e => e.mode === 'note';
+const modeLabel = e => isNote(e) ? 'Journal' : e.mode === 'quick' ? 'Quick reflection' : 'Full reflection';
+const clip = (t, n) => t.length > n ? t.slice(0, n).trim() + '…' : t;
+
 function journal() {
   render(`
     ${topBar(backBtn('back', 'Home'))}
     <h2>Journal</h2>
     <p class="muted small" style="margin-top:6px">Saved only on this phone.</p>
+    <button class="btn" id="write" style="margin-top:20px">${db.noteDraft ? 'Continue writing' : '+ Write something'}</button>
     <div class="prompt-list" style="margin-top:20px">
       ${db.entries.length ? db.entries.map(e => `
         <button class="card tap stack" data-id="${esc(e.id)}">
-          <div class="label">${esc(fmtDate(e.date))} · ${e.mode === 'quick' ? 'Quick' : 'Full'}</div>
-          <p>${esc(e.prompt)}${e.custom ? '' : ' then…'}</p>
-          ${e.answers.fear ? `<p class="muted small">${esc(e.answers.fear.slice(0, 120))}${e.answers.fear.length > 120 ? '…' : ''}</p>` : ''}
+          <div class="label">${esc(fmtDate(e.date))} · ${modeLabel(e)}${isNote(e) && e.mood ? ' · ' + esc(e.mood) : ''}</div>
+          ${isNote(e)
+            ? `<p>${esc(clip(e.text || '', 160))}</p>`
+            : `<p>${esc(e.prompt)}${e.custom ? '' : ' then…'}</p>
+               ${e.answers.fear ? `<p class="muted small">${esc(clip(e.answers.fear, 120))}</p>` : ''}`}
         </button>`).join('')
-      : '<div class="card"><p class="muted">Nothing here yet. When you finish a reflection, it will show up here.</p></div>'}
+      : '<div class="card"><p class="muted">Nothing here yet. Tap “Write something” to start, or finish a reflection and it will show up here too.</p></div>'}
     </div>
   `);
   on('back', home);
+  on('write', () => writeNote());
   app.querySelectorAll('[data-id]').forEach(b => b.onclick = () => viewEntry(b.dataset.id));
+}
+
+/* free writing; editId set when editing an existing entry */
+function writeNote(editId) {
+  const existing = editId ? db.entries.find(x => x.id === editId) : null;
+  if (!existing && !db.noteDraft) { db.noteDraft = { text: '', mood: '', startedAt: Date.now() }; save(); }
+  const d = existing ? { text: existing.text || '', mood: existing.mood || '' } : db.noteDraft;
+  render(`
+    ${topBar(backBtn('back', existing ? 'Cancel' : 'Journal'), '<button class="link" id="saveTop"><strong>Save</strong></button>')}
+    <div class="stack">
+      <h2>${existing ? 'Edit entry' : 'What’s on your mind?'}</h2>
+      <p class="hint">Write freely. Nobody else will read this. To talk instead of type, tap the 🎤 microphone on your keyboard.</p>
+    </div>
+    <div class="label" style="margin-top:20px">How are you feeling? (optional)</div>
+    <div class="chips" style="margin-top:10px">${MOODS.map(m =>
+      `<button class="chip${d.mood === m ? ' on' : ''}" data-mood="${m}">${m}</button>`).join('')}</div>
+    <div style="margin-top:16px" class="grow"><textarea id="note" style="min-height:42vh" placeholder="Start writing…">${esc(d.text)}</textarea></div>
+    <div class="bottom">
+      <button class="btn" id="save">Save to journal</button>
+      ${existing ? '' : '<button class="btn ghost" id="discard">Discard</button>'}
+    </div>
+  `);
+  const ta = document.getElementById('note');
+  ta.oninput = () => { d.text = ta.value; if (!existing) save(); };
+  app.querySelectorAll('[data-mood]').forEach(b => b.onclick = () => {
+    d.mood = d.mood === b.dataset.mood ? '' : b.dataset.mood;
+    if (!existing) save();
+    app.querySelectorAll('[data-mood]').forEach(x => x.classList.toggle('on', x.dataset.mood === d.mood));
+  });
+  const commit = () => {
+    const text = ta.value.trim();
+    if (!text) { ta.focus(); return; }
+    if (existing) {
+      existing.text = text; existing.mood = d.mood; existing.edited = Date.now();
+      save();
+      return viewEntry(existing.id);
+    }
+    const entry = { id: d.startedAt.toString(36) + Math.random().toString(36).slice(2, 6),
+      date: Date.now(), mode: 'note', text, mood: d.mood, answers: {} };
+    db.entries.unshift(entry);
+    db.noteDraft = null;
+    save();
+    journal();
+  };
+  on('save', commit);
+  on('saveTop', commit);
+  on('back', () => existing ? viewEntry(existing.id) : journal());
+  on('discard', () => {
+    if (ta.value.trim() && !confirm('Throw away what you wrote?')) return;
+    db.noteDraft = null; save(); journal();
+  });
 }
 
 function viewEntry(id) {
   const e = db.entries.find(x => x.id === id);
   if (!e) return journal();
-  const items = FLOWS[e.mode].filter(k => (e.answers[k] || '').trim() || e.answers[k + '_choice']);
-  render(`
-    ${topBar(backBtn('back', 'Journal'))}
-    <div class="label">${esc(fmtDate(e.date))} · ${e.mode === 'quick' ? 'Quick' : 'Full'}</div>
+  const header = `
+    ${topBar(backBtn('back', 'Journal'), isNote(e) ? '<button class="link" id="edit">Edit</button>' : '')}
+    <div class="label">${esc(fmtDate(e.date))} · ${modeLabel(e)}${isNote(e) && e.mood ? ' · ' + esc(e.mood) : ''}</div>`;
+  let body;
+  if (isNote(e)) {
+    body = `<p style="margin-top:14px;white-space:pre-wrap">${esc(e.text)}</p>`;
+  } else {
+    const items = FLOWS[e.mode].filter(k => (e.answers[k] || '').trim() || e.answers[k + '_choice']);
+    body = `
     <h2 style="margin-top:8px">${esc(e.prompt)}${e.custom ? '' : ' then…'}</h2>
     <dl class="entry-answers" style="margin-top:12px">
       ${items.length ? items.map(k => `
         <dt>${esc(qText(QUESTIONS[k], e))}</dt>
         <dd>${e.answers[k + '_choice'] ? `<strong>${esc(e.answers[k + '_choice'])}.</strong> ` : ''}${esc(e.answers[k] || '')}</dd>`).join('')
       : '<dd class="muted">You skipped all the questions this time, and that’s okay.</dd>'}
-    </dl>
+    </dl>`;
+  }
+  render(`${header}${body}
     <div class="bottom">
       <button class="btn danger" id="del">Delete this entry</button>
     </div>
   `);
   on('back', journal);
+  on('edit', () => writeNote(id));
   on('del', () => {
     if (!confirm('Delete this entry? This can’t be undone.')) return;
     db.entries = db.entries.filter(x => x.id !== id);
@@ -617,6 +685,7 @@ function viewEntry(id) {
 
 function entriesAsText() {
   return db.entries.map(e => {
+    if (isNote(e)) return `${fmtDate(e.date)} (journal${e.mood ? ', ' + e.mood : ''})\n\n${e.text}\n`;
     const lines = [`${fmtDate(e.date)} (${e.mode})`, `${e.prompt}${e.custom ? '' : ' then…'}`, ''];
     FLOWS[e.mode].forEach(k => {
       const a = (e.answers[k] || '').trim();
@@ -685,7 +754,7 @@ function about() {
       const data = JSON.parse(await f.text());
       const incoming = Array.isArray(data.entries) ? data.entries : [];
       const have = new Set(db.entries.map(e => e.id));
-      const added = incoming.filter(e => e && e.id && e.answers && !have.has(e.id));
+      const added = incoming.filter(e => e && e.id && (e.answers || e.text) && !have.has(e.id));
       db.entries = db.entries.concat(added).sort((a, b) => b.date - a.date);
       save();
       alert(`Restored ${added.length} entr${added.length === 1 ? 'y' : 'ies'}.`);
@@ -696,7 +765,7 @@ function about() {
   };
   on('wipe', () => {
     if (!confirm('Delete every entry and unfinished reflection on this phone? This can’t be undone.')) return;
-    db = { entries: [], draft: null };
+    db = { entries: [], draft: null, noteDraft: null };
     save();
     home();
   });
