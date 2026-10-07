@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calm</title>
+<meta name="description" content="A private routine to calm down and work through triggers.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Calm">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f4efe9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1a22" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+:root {
+  --bg: #f4efe9;
+  --surface: #fffaf5;
+  --surface-2: #ece4db;
+  --text: #2d2a32;
+  --muted: #736b75;
+  --accent: #7a6a9e;
+  --accent-soft: #e4ddf0;
+  --accent-text: #ffffff;
+  --sage: #8fa58c;
+  --border: #e1d7cc;
+  --danger: #a5524a;
+  --shadow: 0 1px 2px rgba(60, 40, 30, .06), 0 6px 20px rgba(60, 40, 30, .06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1a22;
+    --surface: #25242e;
+    --surface-2: #302e3a;
+    --text: #ece8f0;
+    --muted: #a39cab;
+    --accent: #a897d1;
+    --accent-soft: #3a3550;
+    --accent-text: #1b1a22;
+    --sage: #9fb89c;
+    --border: #3a3846;
+    --danger: #e08a80;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+#app {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100%;
+  padding: calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 24px);
+  display: flex;
+  flex-direction: column;
+}
+h1, h2, h3 { font-family: ui-serif, "New York", Georgia, serif; font-weight: 500; letter-spacing: -.01em; margin: 0; }
+h1 { font-size: 32px; line-height: 1.15; }
+h2 { font-size: 26px; line-height: 1.2; }
+h3 { font-size: 19px; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.stack > * + * { margin-top: 12px; }
+.grow { flex: 1; }
+.top {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 44px; margin-bottom: 16px;
+}
+.link {
+  background: none; border: 0; color: var(--accent); font: inherit; padding: 10px 4px; cursor: pointer;
+}
+.btn {
+  display: block; width: 100%;
+  border: 0; border-radius: 16px;
+  padding: 17px 20px;
+  font: inherit; font-weight: 600;
+  background: var(--accent); color: var(--accent-text);
+  cursor: pointer; text-align: center;
+}
+.btn.soft { background: var(--accent-soft); color: var(--text); font-weight: 500; }
+.btn.ghost { background: transparent; color: var(--muted); font-weight: 500; }
+.btn.danger { background: transparent; color: var(--danger); font-weight: 500; border: 1px solid var(--border); }
+.btn:active, .card.tap:active { transform: scale(.985); }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 18px 20px; box-shadow: var(--shadow);
+}
+.card.tap { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.hero {
+  padding: 26px 22px; border-radius: 24px;
+  background: linear-gradient(145deg, var(--accent), #9a86b8);
+  color: #fff; border: 0; text-align: left; width: 100%; font: inherit; cursor: pointer;
+}
+@media (prefers-color-scheme: dark) { .hero { background: linear-gradient(145deg, #5e5187, #7a6a9e); } }
+.hero h2 { color: #fff; }
+.hero p { opacity: .9; margin-top: 6px; }
+.truth {
+  border-left: 3px solid var(--sage); padding: 4px 0 4px 14px;
+  font-family: ui-serif, "New York", Georgia, serif; font-size: 19px; line-height: 1.4;
+}
+.label { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.progress { height: 4px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s ease; }
+textarea, input[type=text] {
+  width: 100%; font: inherit; font-size: 17px; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 14px 16px; resize: none; outline: none;
+}
+textarea { min-height: 160px; }
+textarea:focus, input[type=text]:focus { border-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 999px; padding: 9px 16px; font: inherit; font-size: 15px; cursor: pointer;
+}
+.chip.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.prompt-list { display: grid; gap: 10px; }
+.prompt-list .card { padding: 15px 18px; }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; }
+.hint { font-size: 15px; color: var(--muted); }
+.bottom { margin-top: auto; padding-top: 20px; }
+.bottom > * + * { margin-top: 10px; }
+
+/* breathing */
+.breath-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 28px; }
+.orb-stage { width: 260px; height: 260px; display: grid; place-items: center; }
+.orb {
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--accent-soft), var(--accent));
+  transform: scale(.45); transition-property: transform; transition-timing-function: ease-in-out;
+  opacity: .9;
+}
+.breath-word { font-family: ui-serif, "New York", Georgia, serif; font-size: 28px; min-height: 40px; }
+@media (prefers-reduced-motion: reduce) { .orb { transition-duration: 0s !important; } }
+
+.entry-answers dt { color: var(--muted); font-size: 14px; margin-top: 14px; }
+.entry-answers dd { margin: 4px 0 0; white-space: pre-wrap; }
+.fade { animation: fade .25s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+'use strict';
+
+/* ---------- content ---------- */
+
+const PROMPTS = [
+  'If I say no or hold a boundary,',
+  'If I leave this conflict unresolved for now,',
+  'If I own my needs and ask for them,',
+  'If I put my own care first today,',
+  'If I say how I really feel,',
+  'If nobody reassures me,',
+  'If I let others handle their own feelings,',
+  'If I stop shrinking to keep others happy,',
+  'If I let go of control,',
+  'If I stop rescuing others from their problems,'
+];
+
+const SECTIONS = {
+  thought: 'Check the thought',
+  body: 'Feel it in your body',
+  young: 'Your younger self',
+  close: 'Wrap up'
+};
+
+const QUESTIONS = {
+  fear: { s: 'thought', t: d => d.custom
+      ? 'What are you afraid will happen?'
+      : `Finish the sentence: “${d.prompt} I’m afraid that…”`,
+    h: 'Write the first thing that comes up, even if it sounds dramatic.' },
+  story: { s: 'thought', t: 'What is this fear saying about you as a person?',
+    h: 'For example: “I’m too much.” “I’m not enough.” “I’ll end up alone.”' },
+  believe: { s: 'thought', t: 'When you believe that story, how do you feel? What do you tend to do?' },
+  without: { s: 'thought', t: 'Now imagine setting that story down for a moment. How do you feel without it?' },
+
+  where: { s: 'body', t: 'Where do you notice this feeling in your body right now?',
+    h: 'Chest, throat, stomach, jaw, shoulders… or nowhere in particular, which is fine too.' },
+  describe: { s: 'body', t: 'If the feeling were an object, what would it be like?',
+    h: 'Colour, shape, size, weight, temperature, texture. Sharp or soft? Heavy or light?' },
+  breathe: { s: 'body', t: 'Take three slow breaths and stay with it. What do you notice?',
+    h: 'If you feel steady, you can let the sensation grow a little and watch what happens. If you already feel overwhelmed, skip that part and just breathe.' },
+
+  age: { s: 'young', t: 'If this feeling belonged to a younger you, how old would they be?' },
+  want: { s: 'young', t: 'What are they hoping for right now?' },
+  need: { s: 'young', t: 'What do they need underneath that?',
+    h: 'Safety, comfort, attention, being believed, being chosen…' },
+  met: { s: 'young', t: 'How would they feel if they got that?' },
+  say: { s: 'young', t: 'What do you want them to hear from you today?',
+    h: 'Talk to them the way you would talk to a child you love.' },
+  respond: { s: 'young', t: 'How do they react to that?' },
+  safe: { s: 'young', t: 'Would they come with you somewhere peaceful? Describe the place. If they aren’t ready, what would help them feel safe?' },
+  release: { s: 'young', t: 'Is there something heavy they’re ready to put down? Where would they like to let it go?',
+    chips: ['Earth', 'Water', 'Fire', 'Air'],
+    h: 'Picture it leaving them: buried, washed away, burned or carried off by the wind. It’s okay if they aren’t ready yet.' },
+  newjob: { s: 'young', t: 'Now that they don’t have to carry it, what would they like to do instead?',
+    h: 'Play, rest, be curious, be looked after…' },
+  complete: { s: 'young', t: 'Is there anything else they need before you close?' },
+
+  pattern: { s: 'close', t: 'Have you felt this way before? What keeps repeating?' },
+  truth: { s: 'close', t: 'What is one thing you want to remember this week?',
+    h: 'This will show on your home screen.' },
+  kind: { s: 'close', t: 'What would a kind response look like here, toward yourself and the other person, instead of a fearful one?' }
+};
+
+const FLOWS = {
+  quick: ['fear', 'story', 'without', 'where', 'need', 'say', 'truth'],
+  full: Object.keys(QUESTIONS)
+};
+
+const GROUNDING = [
+  ['5', 'things you can see', 'Look around slowly. Name them in your head or out loud.'],
+  ['4', 'things you can feel', 'Your feet on the floor, your clothes, the air, whatever you’re sitting on.'],
+  ['3', 'things you can hear', 'Near and far. Even the quiet counts.'],
+  ['2', 'things you can smell', 'Or two smells you like, if nothing is around.'],
+  ['1', 'kind thing to tell yourself', 'Something like: “I’m safe right now. This feeling will pass.”']
+];
+
+/* ---------- storage (only on this device) ---------- */
+
+const KEY = 'calm.v1';
+let db = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    const data = raw ? JSON.parse(raw) : null;
+    if (data && Array.isArray(data.entries)) return data;
+  } catch (e) {}
+  return { entries: [], draft: null };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
+}
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+
+/* ---------- helpers ---------- */
+
+const app = document.getElementById('app');
+let timers = [];
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+function qText(q, d) { return typeof q.t === 'function' ? q.t(d) : q.t; }
+function fmtDate(ts) {
+  return new Date(ts).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+function greeting() {
+  const h = new Date().getHours();
+  return h < 5 ? 'Hey, night owl' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+}
+function latestTruth() {
+  for (const e of db.entries) if (e.answers && e.answers.truth && e.answers.truth.trim()) return e;
+  return null;
+}
+function render(html) {
+  clearTimers();
+  app.innerHTML = `<div class="fade grow" style="display:flex;flex-direction:column">${html}</div>`;
+  window.scrollTo(0, 0);
+}
+function on(id, fn) { const el = document.getElementById(id); if (el) el.onclick = fn; }
+function topBar(left, right) {
+  return `<div class="top">${left || '<span></span>'}${right || '<span></span>'}</div>`;
+}
+const backBtn = (id, label) => `<button class="link" id="${id}">‹ ${label || 'Back'}</button>`;
+
+/* ---------- screens ---------- */
+
+function home() {
+  const t = latestTruth();
+  const d = db.draft;
+  render(`
+    ${topBar('<span></span>', '<button class="link" id="about">About</button>')}
+    <div class="stack">
+      <h1>${greeting()}.</h1>
+      <p class="muted">Take a breath. You’re here, and that’s a good start.</p>
+    </div>
+
+    ${t ? `<div class="card stack" style="margin-top:24px">
+      <div class="label">Your truth for this week</div>
+      <p class="truth">${esc(t.answers.truth)}</p>
+    </div>` : ''}
+
+    ${d ? `<button class="card tap stack" id="resume" style="margin-top:16px">
+      <div class="label">Unfinished</div>
+      <p>Continue your ${d.mode === 'quick' ? 'quick' : 'full'} reflection from ${esc(fmtDate(d.startedAt))}</p>
+    </button>` : ''}
+
+    <div class="stack" style="margin-top:24px">
+      <button class="hero" id="calm">
+        <h2>I need to calm down</h2>
+        <p>A minute of breathing, then a short grounding exercise.</p>
+      </button>
+      <button class="card tap" id="reflect">
+        <h3>Work through a trigger</h3>
+        <p class="muted small" style="margin-top:4px">Find the fear underneath and look after it. 5 or 20 minutes.</p>
+      </button>
+      <button class="card tap" id="journal">
+        <h3>Journal</h3>
+        <p class="muted small" style="margin-top:4px">${db.entries.length
+          ? `${db.entries.length} reflection${db.entries.length === 1 ? '' : 's'} saved on this phone`
+          : 'Your past reflections will show up here'}</p>
+      </button>
+    </div>
+
+    <p class="muted small" style="margin-top:auto;padding-top:28px;text-align:center">
+      🔒 Everything you write stays on this phone.
+    </p>
+  `);
+  on('calm', () => breathe(() => ground()));
+  on('reflect', choosePrompt);
+  on('journal', journal);
+  on('about', about);
+  on('resume', () => question(db.draft.step));
+}
+
+/* breathing: 4s in, 6s out, 6 rounds (~1 minute) */
+function breathe(next) {
+  const IN = 4000, OUT = 6000, ROUNDS = 6;
+  render(`
+    ${topBar(backBtn('back', 'Home'), '<button class="link" id="skip">Skip</button>')}
+    <div class="breath-wrap">
+      <div class="orb-stage"><div class="orb" id="orb"></div></div>
+      <div>
+        <div class="breath-word" id="word">Get comfortable</div>
+        <p class="muted small" id="count" style="margin-top:6px">Breathe in through your nose, out slowly through your mouth</p>
+      </div>
+    </div>
+    <div class="bottom"><button class="btn soft" id="done" style="visibility:hidden">Continue</button></div>
+  `);
+  const orb = document.getElementById('orb');
+  const word = document.getElementById('word');
+  const count = document.getElementById('count');
+  let round = 0;
+  function cycle() {
+    if (round >= ROUNDS) {
+      word.textContent = 'Nice.';
+      count.textContent = 'Notice how your body feels now.';
+      document.getElementById('done').style.visibility = 'visible';
+      return;
+    }
+    round++;
+    count.textContent = `Breath ${round} of ${ROUNDS}`;
+    word.textContent = 'Breathe in…';
+    orb.style.transitionDuration = IN + 'ms';
+    orb.style.transform = 'scale(1)';
+    later(() => {
+      word.textContent = 'and slowly out…';
+      orb.style.transitionDuration = OUT + 'ms';
+      orb.style.transform = 'scale(.45)';
+      later(cycle, OUT);
+    }, IN);
+  }
+  later(cycle, 1500);
+  on('back', home);
+  on('skip', next);
+  on('done', next);
+}
+
+function ground(i = 0) {
+  if (i >= GROUNDING.length) return afterCalm();
+  const [n, what, hint] = GROUNDING[i];
+  render(`
+    ${topBar(backBtn('back', i ? 'Back' : 'Home'), `<span class="muted small">${i + 1} of ${GROUNDING.length}</span>`)}
+    <div class="breath-wrap">
+      <div style="font-family:ui-serif,Georgia,serif;font-size:96px;line-height:1;color:var(--accent)">${n}</div>
+      <div class="stack">
+        <h2>${what}</h2>
+        <p class="muted">${hint}</p>
+      </div>
+    </div>
+    <div class="bottom"><button class="btn" id="next">${i === GROUNDING.length - 1 ? 'Done' : 'Next'}</button></div>
+  `);
+  on('back', () => i ? ground(i - 1) : home());
+  on('next', () => ground(i + 1));
+}
+
+function afterCalm() {
+  render(`
+    ${topBar(backBtn('back', 'Home'))}
+    <div class="breath-wrap">
+      <div class="stack">
+        <h2>How are you feeling?</h2>
+        <p class="muted">If you feel steadier, you can look at what set this off. If not, it’s okay to do another round, or to stop here.</p>
+      </div>
+    </div>
+    <div class="bottom">
+      <button class="btn" id="reflect">Look at what triggered me</button>
+      <button class="btn soft" id="again">Another round of breathing</button>
+      <button class="btn ghost" id="home">I’m okay for now</button>
+    </div>
+  `);
+  on('back', home);
+  on('home', home);
+  on('again', () => breathe(afterCalm));
+  on('reflect', choosePrompt);
+}
+
+function choosePrompt() {
+  render(`
+    ${topBar(backBtn('back', 'Home'))}
+    <div class="stack">
+      <h2>What’s the fear?</h2>
+      <p class="muted">Pick the one that feels closest right now, or describe your own.</p>
+    </div>
+    <div class="prompt-list" style="margin-top:20px">
+      ${PROMPTS.map((p, i) => `<button class="card tap" data-i="${i}">${esc(p)} <span class="muted">then…</span></button>`).join('')}
+      <div class="card stack">
+        <p>Something else</p>
+        <input type="text" id="own" placeholder="What’s bothering you?" autocomplete="off">
+        <button class="btn soft" id="useOwn">Use this</button>
+      </div>
+    </div>
+  `);
+  on('back', home);
+  app.querySelectorAll('[data-i]').forEach(b => b.onclick = () => chooseLength(PROMPTS[+b.dataset.i], false));
+  on('useOwn', () => {
+    const v = document.getElementById('own').value.trim();
+    if (v) chooseLength(v, true);
+    else document.getElementById('own').focus();
+  });
+}
+
+function chooseLength(prompt, custom) {
+  render(`
+    ${topBar(backBtn('back'))}
+    <div class="stack">
+      <div class="label">${custom ? 'What’s bothering you' : 'Your prompt'}</div>
+      <p class="truth">${esc(prompt)}${custom ? '' : ' then…'}</p>
+    </div>
+    <div class="stack" style="margin-top:28px">
+      <h2>How much time do you have?</h2>
+      <button class="card tap" id="quick">
+        <h3>Quick · about 5 minutes</h3>
+        <p class="muted small" style="margin-top:4px">7 questions: the fear, your body, what you need, one thing to remember.</p>
+      </button>
+      <button class="card tap" id="full">
+        <h3>Full · about 20 minutes</h3>
+        <p class="muted small" style="margin-top:4px">${FLOWS.full.length} questions. Goes deeper with your body and your younger self.</p>
+      </button>
+    </div>
+    <p class="muted small" style="margin-top:20px">Every question is optional. Skip anything that doesn’t fit.</p>
+  `);
+  on('back', choosePrompt);
+  const start = mode => {
+    db.draft = { mode, prompt, custom, step: 0, answers: {}, startedAt: Date.now() };
+    save();
+    question(0);
+  };
+  on('quick', () => start('quick'));
+  on('full', () => start('full'));
+}
+
+function question(step) {
+  const d = db.draft;
+  if (!d) return home();
+  const flow = FLOWS[d.mode];
+  if (step >= flow.length) return finish();
+  d.step = step; save();
+  const id = flow[step];
+  const q = QUESTIONS[id];
+  const prevSection = step > 0 ? QUESTIONS[flow[step - 1]].s : null;
+  const val = d.answers[id] || '';
+  const chipVal = d.answers[id + '_choice'] || '';
+  render(`
+    ${topBar(backBtn('back', step ? 'Back' : 'Exit'), '<button class="link" id="exit">Save &amp; exit</button>')}
+    <div class="progress"><div style="width:${Math.round((step / flow.length) * 100)}%"></div></div>
+    <div class="stack" style="margin-top:22px">
+      <div class="label">${SECTIONS[q.s]}${q.s !== prevSection && step ? ' · new section' : ''}</div>
+      ${step === 0 && d.custom ? `<p class="muted small">“${esc(d.prompt)}”</p>` : ''}
+      <h2>${esc(qText(q, d))}</h2>
+      ${q.h ? `<p class="hint">${esc(q.h)}</p>` : ''}
+    </div>
+    ${q.chips ? `<div class="chips" style="margin-top:16px">${q.chips.map(c =>
+      `<button class="chip${chipVal === c ? ' on' : ''}" data-chip="${c}">${c}</button>`).join('')}</div>` : ''}
+    <div style="margin-top:16px"><textarea id="ans" placeholder="Write here…">${esc(val)}</textarea></div>
+    <div class="bottom">
+      <button class="btn" id="next">${val.trim() ? 'Next' : 'Skip'}</button>
+      <p class="muted small" style="text-align:center">${step + 1} of ${flow.length}</p>
+    </div>
+  `);
+  const ta = document.getElementById('ans');
+  const next = document.getElementById('next');
+  ta.oninput = () => {
+    d.answers[id] = ta.value; save();
+    next.textContent = ta.value.trim() ? 'Next' : 'Skip';
+  };
+  app.querySelectorAll('[data-chip]').forEach(b => b.onclick = () => {
+    const c = b.dataset.chip;
+    d.answers[id + '_choice'] = d.answers[id + '_choice'] === c ? '' : c;
+    save();
+    app.querySelectorAll('[data-chip]').forEach(x => x.classList.toggle('on', x.dataset.chip === d.answers[id + '_choice']));
+  });
+  on('next', () => question(step + 1));
+  on('back', () => step ? question(step - 1) : confirmExit());
+  on('exit', home);
+}
+
+function confirmExit() {
+  render(`
+    ${topBar(backBtn('back'))}
+    <div class="breath-wrap">
+      <div class="stack">
+        <h2>Leave this reflection?</h2>
+        <p class="muted">You can keep it to finish later, or throw it away.</p>
+      </div>
+    </div>
+    <div class="bottom">
+      <button class="btn" id="keep">Keep for later</button>
+      <button class="btn danger" id="discard">Discard it</button>
+    </div>
+  `);
+  on('back', () => question(0));
+  on('keep', home);
+  on('discard', () => { db.draft = null; save(); home(); });
+}
+
+function finish() {
+  const d = db.draft;
+  const entry = {
+    id: d.startedAt.toString(36) + Math.random().toString(36).slice(2, 6),
+    date: Date.now(),
+    mode: d.mode,
+    prompt: d.prompt,
+    custom: !!d.custom,
+    answers: d.answers
+  };
+  db.entries.unshift(entry);
+  db.draft = null;
+  save();
+  const truth = (entry.answers.truth || '').trim();
+  render(`
+    <div class="breath-wrap">
+      <div style="font-size:48px">🌿</div>
+      <div class="stack">
+        <h2>You showed up for yourself.</h2>
+        <p class="muted">That takes courage. Your reflection is saved on this phone.</p>
+      </div>
+      ${truth ? `<div class="card stack" style="text-align:left;width:100%">
+        <div class="label">Carry this with you</div>
+        <p class="truth">${esc(truth)}</p>
+      </div>` : ''}
+      <p class="muted small">Before you go, take one more slow breath. Unclench your jaw. Drop your shoulders.</p>
+    </div>
+    <div class="bottom">
+      <button class="btn" id="home">Back to home</button>
+      <button class="btn soft" id="view">See what I wrote</button>
+    </div>
+  `);
+  on('home', home);
+  on('view', () => viewEntry(entry.id));
+}
+
+function journal() {
+  render(`
+    ${topBar(backBtn('back', 'Home'))}
+    <h2>Journal</h2>
+    <p class="muted small" style="margin-top:6px">Saved only on this phone.</p>
+    <div class="prompt-list" style="margin-top:20px">
+      ${db.entries.length ? db.entries.map(e => `
+        <button class="card tap stack" data-id="${esc(e.id)}">
+          <div class="label">${esc(fmtDate(e.date))} · ${e.mode === 'quick' ? 'Quick' : 'Full'}</div>
+          <p>${esc(e.prompt)}${e.custom ? '' : ' then…'}</p>
+          ${e.answers.fear ? `<p class="muted small">${esc(e.answers.fear.slice(0, 120))}${e.answers.fear.length > 120 ? '…' : ''}</p>` : ''}
+        </button>`).join('')
+      : '<div class="card"><p class="muted">Nothing here yet. When you finish a reflection, it will show up here.</p></div>'}
+    </div>
+  `);
+  on('back', home);
+  app.querySelectorAll('[data-id]').forEach(b => b.onclick = () => viewEntry(b.dataset.id));
+}
+
+function viewEntry(id) {
+  const e = db.entries.find(x => x.id === id);
+  if (!e) return journal();
+  const items = FLOWS[e.mode].filter(k => (e.answers[k] || '').trim() || e.answers[k + '_choice']);
+  render(`
+    ${topBar(backBtn('back', 'Journal'))}
+    <div class="label">${esc(fmtDate(e.date))} · ${e.mode === 'quick' ? 'Quick' : 'Full'}</div>
+    <h2 style="margin-top:8px">${esc(e.prompt)}${e.custom ? '' : ' then…'}</h2>
+    <dl class="entry-answers" style="margin-top:12px">
+      ${items.length ? items.map(k => `
+        <dt>${esc(qText(QUESTIONS[k], e))}</dt>
+        <dd>${e.answers[k + '_choice'] ? `<strong>${esc(e.answers[k + '_choice'])}.</strong> ` : ''}${esc(e.answers[k] || '')}</dd>`).join('')
+      : '<dd class="muted">You skipped all the questions this time, and that’s okay.</dd>'}
+    </dl>
+    <div class="bottom">
+      <button class="btn danger" id="del">Delete this entry</button>
+    </div>
+  `);
+  on('back', journal);
+  on('del', () => {
+    if (!confirm('Delete this entry? This can’t be undone.')) return;
+    db.entries = db.entries.filter(x => x.id !== id);
+    save();
+    journal();
+  });
+}
+
+function entriesAsText() {
+  return db.entries.map(e => {
+    const lines = [`${fmtDate(e.date)} (${e.mode})`, `${e.prompt}${e.custom ? '' : ' then…'}`, ''];
+    FLOWS[e.mode].forEach(k => {
+      const a = (e.answers[k] || '').trim();
+      const c = e.answers[k + '_choice'];
+      if (a || c) lines.push(`• ${qText(QUESTIONS[k], e)}`, `  ${c ? c + '. ' : ''}${a}`, '');
+    });
+    return lines.join('\n');
+  }).join('\n————————\n\n');
+}
+
+async function shareFile(name, type, content) {
+  const file = new File([content], name, { type });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function about() {
+  render(`
+    ${topBar(backBtn('back', 'Home'))}
+    <h2>About Calm</h2>
+    <div class="stack" style="margin-top:16px">
+      <div class="card stack">
+        <h3>Your privacy</h3>
+        <p class="muted small">Everything you write is stored only in this app on this phone. Nothing is sent anywhere: no account, no server, no tracking. It also works offline.</p>
+        <p class="muted small">If you delete the app from your home screen, your entries are deleted too, so make a backup now and then.</p>
+      </div>
+      <div class="card stack">
+        <h3>Backup</h3>
+        <p class="muted small">Save a backup file to Files, iCloud Drive or Notes. You can restore it later from the same file.</p>
+        <div class="row">
+          <button class="btn soft" id="expJson">Save backup</button>
+          <button class="btn soft" id="impJson">Restore</button>
+        </div>
+        <button class="btn soft" id="expTxt">Export as readable text</button>
+        <input type="file" id="file" accept="application/json,.json" hidden>
+      </div>
+      <div class="card stack">
+        <h3>If it’s too much</h3>
+        <p class="muted small">This is a self-care tool, not therapy. If old memories or trauma come up and feel heavy, it’s a good sign to work with a therapist. If you are in crisis or feel unsafe, call your local emergency number. In the US you can call or text <strong>988</strong>.</p>
+      </div>
+      <button class="btn danger" id="wipe">Delete all my data</button>
+    </div>
+  `);
+  on('back', home);
+  const stamp = new Date().toISOString().slice(0, 10);
+  on('expJson', () => shareFile(`calm-backup-${stamp}.json`, 'application/json',
+    JSON.stringify({ app: 'calm', version: 1, exported: Date.now(), entries: db.entries }, null, 2)));
+  on('expTxt', () => shareFile(`calm-journal-${stamp}.txt`, 'text/plain', entriesAsText() || 'No entries yet.'));
+  const fileInput = document.getElementById('file');
+  on('impJson', () => fileInput.click());
+  fileInput.onchange = async () => {
+    const f = fileInput.files[0];
+    if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      const incoming = Array.isArray(data.entries) ? data.entries : [];
+      const have = new Set(db.entries.map(e => e.id));
+      const added = incoming.filter(e => e && e.id && e.answers && !have.has(e.id));
+      db.entries = db.entries.concat(added).sort((a, b) => b.date - a.date);
+      save();
+      alert(`Restored ${added.length} entr${added.length === 1 ? 'y' : 'ies'}.`);
+    } catch (e) {
+      alert('That file doesn’t look like a Calm backup.');
+    }
+    fileInput.value = '';
+  };
+  on('wipe', () => {
+    if (!confirm('Delete every entry and unfinished reflection on this phone? This can’t be undone.')) return;
+    db = { entries: [], draft: null };
+    save();
+    home();
+  });
+}
+
+home();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
